@@ -1,3 +1,5 @@
+import { MESSAGE as MODEL } from '../background/model';
+
 export class Tweet {
 
     text: string; // Text of the tweet
@@ -12,22 +14,22 @@ export class Tweet {
     }
 }
 
-const classifier = chrome.runtime.connect({ name: 'classifier' });
+const classifier = chrome.runtime.connect({ name: MODEL.PORT_ID });
 
 classifier.onDisconnect.addListener(() => {
     console.error('Classifier disconnected');
 });
 
 chrome.runtime.onConnect.addListener((port) => {
-    (port.name === 'classifier') && console.log(`Classifier connected`);
+    if (port.name === MODEL.PORT_ID) console.log(`Classifier connected`);
 });
 
 classifier.onMessage.addListener((message) => {
     switch (message.type) {
-        case 'results':
+        case MODEL.TYPE.RESULTS:
             console.log(message.results);
             break;
-        case 'error':
+        case MODEL.TYPE.ERROR:
             console.error(message.message);
             break;
         default:
@@ -36,4 +38,24 @@ classifier.onMessage.addListener((message) => {
     }
 });
 
- 
+let timelineObserver: MutationObserver | null = null;
+
+const filterNodes = (mutations, predicate: (element: HTMLElement) => boolean) => {
+    mutations.forEach((mutation) => {
+        mutation.addedNodes.forEach((node) => {
+            if (node.nodeType === Node.ELEMENT_NODE) {
+                const element = node as HTMLElement;
+                if (predicate(element)) return element;
+            }
+        });
+    });
+
+const rootObserver = new MutationObserver(mutations => 
+    filterNodes(mutations, 
+        (e) => e.matches('div') && e.attributes.getNamedItem('data-testid')?.value === 'primaryColumn')
+    );
+
+rootObserver.observe(document.body, {
+    childList: true,
+    subtree: true,
+});

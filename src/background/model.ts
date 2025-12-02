@@ -1,51 +1,87 @@
 import { pipeline, TextClassificationOutput, TextClassificationSingle } from "@huggingface/transformers";
 
+
+
+export const MESSAGE = {
+  PORT_ID: 'classifier',
+  TYPE: {
+    CLASSIFY: 'classify',
+    ERROR: 'error',
+    RESULTS: 'results',
+  },
+}
+
+export const MODEL = {
+    config: [
+      'text-classification',
+      'Heriot-WattUniversity/gbv-classifier-roberta-base-instruct-ONNX',
+      {
+        dtype: 'q4',
+        device: 'webgpu',
+      }
+    ],
+    format: (input: string) => `Classify the following message from a social media platform. It might contain a form of gender-based violence (GBV). Output 1 if it contains GBV, or 0 if not.  
+    Text: ${input} 
+    Choices: 1 for GBV, or 0 for Not GBV.
+    Answer: `,  
+};
+
+
 type Result = {
-  label: 'GBV' | 'Not GBV';
+  label: 0 | 1;
+  score: number;
+}
+
+type ModelResult = {
+  label: 'GBV' | 'Not GBV' | 0 | 1;
   score: number;
 }
 
 console.log('Loading classifier...');
-const classifier = await pipeline(
-  'text-classification',
-  'Heriot-WattUniversity/gbv-classifier-roberta-base-instruct-ONNX',
-  {
-    dtype: 'q4',
-    device: 'webgpu',
+const classifier = await pipeline(...MODEL.config)
+console.log('Classifier loaded');
+
+
+const normalise = (results: ModelResult[]): Result[] => {
+  const normalise = (label: 'GBV' | 'Not GBV' | 0 | 1): 0 | 1 => {
+    if (label === 'GBV') return 1;
+    if (label === 'Not GBV') return 0;
+    return label;
   }
-)
 
-const formatInstruction = (text: string) => 
-  `Classify the following message from a social media platform. It might contain a form of gender-based violence (GBV). Output 1 if it contains GBV, or 0 if not. 
-  Text: ${text} 
-  Choices: 1 for GBV, or 0 for Not GBV.
-  Answer: `;
-
-const retypeResults = (results: any[]): {label: 0 | 1, score: number}[] => {
-  return results.map((result: any) => ({
-     label: result.label === 'GBV' ? 1 : 0,
-     score: result.score as number 
+  return results.map((result: ModelResult) => ({
+    label: normalise(result.label),
+    score: result.score as number
   }));
 }
 
-const inferBatch = (texts: string[]): Promise<{label: 0 | 1, score: number}[]> => {
-  return classifier(texts.map(formatInstruction)).then( retypeResults );
+const classify = (texts: string[]): Promise<ModelResult[]> => {
+  return classifier(texts.map(MODEL.format)).then(normalise);
 }
 
-const port = chrome.runtime.connect({ name: 'classifier' });
+const port = chrome.runtime.connect({ name: MESSAGE.PORT_ID });
 
 port.onMessage.addListener(async (message) => {
   switch (message.type) {
-    case 'classify':
-      try {
-        const results = await inferBatch(message.texts || [message.text]);
-        port.postMessage({ type: 'results', results });
-      } catch (error) {
-        port.postMessage({ type: 'error', message: error instanceof Error ? error.message : 'Unknown error' } as any);
-      }
+    case MESSAGE.TYPE.CLASSIFY:
+      classify(message.texts || [message.text]).then(results => {
+        port.postMessage({ type: MESSAGE.TYPE.RESULTS, results });
+      }).catch(error => {
+        port.postMessage({
+          type: MESSAGE.TYPE.ERROR,
+          message: error instanceof Error ? error.message : 'Unknown error'
+        });
+      });
       break;
     default:
-      port.postMessage({ type: 'error', message: `Unknown message type: ${message.type}` } as any);
+      port.postMessage({
+        type: MESSAGE.TYPE.ERROR,
+        message: `Unknown message type: ${message.type}`
+      });
       break;
   }
 });
+
+
+
+
