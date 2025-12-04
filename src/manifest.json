@@ -1,0 +1,21 @@
+{
+    "manifest_version": 3,
+    "name": "Support Buddy Content Filter",
+    "version": "2.0",
+    "permissions": ["storage", "scripting", "activeTab"],
+    "host_permissions": ["https://x.com/*"],
+    "content_security_policy": {
+      "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'"
+    },
+    "background": {
+      "service_worker": "model.js",
+      "type": "module"
+    },
+    "content_scripts": [{
+      "matches": ["<all_urls>"],
+      "js": ["extract.js", "ui.js"],
+      "css": ["ui.css"],
+      "run_at": "document_idle"
+    }],
+    "action": { "default_popup": "popup.html" }
+  } 
