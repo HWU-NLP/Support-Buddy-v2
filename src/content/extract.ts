@@ -63,7 +63,8 @@ let batch = {
 
 // Find the virtual scroll container (the div with position:relative inside timeline)
 function findVirtualScrollContainer(): HTMLElement | null {
-    const timeline = document.querySelector('div[aria-label="Timeline: Your Home Timeline"]');
+    const timeline = document.querySelector('div[aria-label="Timeline: Your Home Timeline"], div[aria-label="Timeline: Conversation"]');
+        
     if (!timeline) return null;
     
     // The virtual scroll container is the direct child div with position:relative
