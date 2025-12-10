@@ -18,12 +18,27 @@ console.log('Requesting classifier status');
 classifier.postMessage({ type: MESSAGE.TYPE.STATUS });
 
 classifier.onMessage.addListener((message) => {
+    console.log(message)
     switch (message.type) {
         case MESSAGE.TYPE.LOADING:
-            console.log('Classifier loading');
+            console.log('Classifier: loading');
             break;
         case MESSAGE.TYPE.READY:
-            console.log('Classifier ready');
+            console.log('Classifier: ready');
+            break;
+        case MESSAGE.TYPE.RESULTS:
+            // Match results back to ids by index
+            // Note: results come back in the same order as inputs were sent
+            if (message.results && message.ids) {
+                console.log("Classifier results: ", message.results)
+                message.results.forEach((result: { label: 0 | 1; score: number }, index: number) => {
+                    const id = message.ids[index];
+                    decisions[id] = result.label;
+                });
+            }
+            break;
+        case MESSAGE.TYPE.ERROR:
+            console.error('Classifier error:', message.message);
             break;
     }
 });
@@ -31,9 +46,20 @@ classifier.onDisconnect.addListener(() => {
     console.error('Classifier disconnected');
 });
 
-const port = chrome.runtime.connect({ name: MESSAGE.PORT_ID });
-
-let observedIds = new Set<string>();
+/**
+ * 
+ * id in decisions -> observed
+ * 
+ * value is undefined -> pending classification
+ * 
+ * value is 0 | 1 -> classified
+ */
+let decisions: Record<string, 0 | 1 | undefined> = {};
+const BATCH_SIZE = 4;
+let batch = {
+    ids: [] as string[],
+    texts: [] as string []
+}
 
 // Find the virtual scroll container (the div with position:relative inside timeline)
 function findVirtualScrollContainer(): HTMLElement | null {
@@ -51,11 +77,23 @@ function extractArticlesFromCell(cell: HTMLElement): void {
     articles.forEach(article => {
         const statusId = Tweet.statusIdFromElement(article);
         if (!statusId) return;
-        if (observedIds.has(statusId)) return;
-        observedIds.add(statusId);
+        // Check if already observed (key exists in decisions)
+        if (statusId in decisions) return;
+        // Mark as observed, pending classification
+        decisions[statusId] = undefined;
         const tweet = Tweet.fromElement(article);
         if (!tweet) return;
-        // classifier.postMessage({ type: MESSAGE.TYPE.CLASSIFY, text: tweet.text });
+        batch.ids.push(statusId);
+        batch.texts.push(tweet.text);
+        if (batch.ids.length >= BATCH_SIZE) {
+            console.log("Dispatching queue to model")
+            classifier.postMessage({
+                type: MESSAGE.TYPE.CLASSIFY,
+                texts: batch.texts,
+                ids: batch.ids  
+            });
+            batch = { ids: [], texts: [] };
+        }
     });
 }
 

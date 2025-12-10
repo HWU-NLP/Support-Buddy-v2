@@ -53,15 +53,12 @@ export class Tweet {
     }
 
     static statusIdFromElement(article: Element): string | null {
-        // Twitter Snowflake IDs are 64-bit integers, max value is 20 digits when stringified
-        // Maximum: 18,446,744,073,709,551,615 (2^64 - 1) = 20 digits
-
-
         const a = article.querySelector('a[href*="/status/"][href*="/analytics"]');
         if (!a) return null;
         // /author/status/1990849576811499961/analytics
-        const split = a.getAttribute('href')?.split('/');
-        return split?.[3] || '';
+        const id = a.getAttribute('href')?.split('/')[3];
+
+        return id ?? null;
     }
 
     static fromElement(article: Element): Tweet | null {

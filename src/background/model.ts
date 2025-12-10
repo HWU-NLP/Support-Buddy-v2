@@ -46,19 +46,23 @@ chrome.runtime.onConnect.addListener((p) => {
 
 
     p.onMessage.addListener(async (message) => {
+      console.log("message recieved:", message)
       switch (message.type) {
         case MESSAGE.TYPE.STATUS:
           p.postMessage({ type: classifier ? MESSAGE.TYPE.READY : MESSAGE.TYPE.LOADING });
           break;
         case MESSAGE.TYPE.CLASSIFY:
-          classify(message.texts || [message.text]).then(results => {
-            p.postMessage({ type: MESSAGE.TYPE.RESULTS, results });
-          }).catch(error => {
-            p.postMessage({
-              type: MESSAGE.TYPE.ERROR,
-              message: error instanceof Error ? error.message : 'Unknown error'
+          const texts = message.texts;
+          
+          classify(texts).then(results => {
+            console.log("classifier results:", results)
+            // Returns the unmutated input ids for tracking
+            p.postMessage({ 
+              type: MESSAGE.TYPE.RESULTS,
+              results, ids: message.ids
             });
-          });
+          }).catch(
+            error => p.postMessage({ type: MESSAGE.TYPE.ERROR, message: error instanceof Error ? error.message : 'Unknown error' }));
           break;
         default:
           p.postMessage({
@@ -68,6 +72,8 @@ chrome.runtime.onConnect.addListener((p) => {
           break;
       }
     });
+
+    console.log("port listener added")
 
   }
 });
