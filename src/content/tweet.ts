@@ -89,8 +89,6 @@ export class Tweet {
             undefined // classification
         );
 
-        console.log("🐦:\n", tweet);
-
         return tweet;
     }
 }

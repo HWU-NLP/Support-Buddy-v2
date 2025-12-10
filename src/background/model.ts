@@ -1,16 +1,5 @@
 import { pipeline, TextClassificationOutput, TextClassificationPipeline } from "@huggingface/transformers";
-
-export const MESSAGE = {
-  PORT_ID: 'classifier',
-  TYPE: {
-    CLASSIFY: 'classify',
-    ERROR: 'error',
-    RESULTS: 'results',
-    LOADING: 'loading',
-    READY: 'ready',
-    STATUS: 'status',
-  },
-}
+import { MESSAGE_PORT, MessageType } from "../common/message";
 
 export const MODEL = {
     config: [
@@ -41,32 +30,32 @@ type RawModelResult = {
 let port: chrome.runtime.Port | null = null;
 
 chrome.runtime.onConnect.addListener((p) => {
-  if (p.name === MESSAGE.PORT_ID) {
+  if (p.name === MESSAGE_PORT) {
     port = p;
 
 
     p.onMessage.addListener(async (message) => {
       console.log("message recieved:", message)
       switch (message.type) {
-        case MESSAGE.TYPE.STATUS:
-          p.postMessage({ type: classifier ? MESSAGE.TYPE.READY : MESSAGE.TYPE.LOADING });
+        case MessageType.STATUS:
+          p.postMessage({ type: classifier ? MessageType.READY : MessageType.LOADING });
           break;
-        case MESSAGE.TYPE.CLASSIFY:
+        case MessageType.CLASSIFY:
           const texts = message.texts;
           
           classify(texts).then(results => {
             console.log("classifier results:", results)
             // Returns the unmutated input ids for tracking
             p.postMessage({ 
-              type: MESSAGE.TYPE.RESULTS,
+              type: MessageType.RESULTS,
               results, ids: message.ids
             });
           }).catch(
-            error => p.postMessage({ type: MESSAGE.TYPE.ERROR, message: error instanceof Error ? error.message : 'Unknown error' }));
+            error => p.postMessage({ type: MessageType.ERROR, message: error instanceof Error ? error.message : 'Unknown error' }));
           break;
         default:
           p.postMessage({
-            type: MESSAGE.TYPE.ERROR,
+            type: MessageType.ERROR,
             message: `Unknown message type: ${message.type}`
           });
           break;
@@ -81,7 +70,7 @@ chrome.runtime.onConnect.addListener((p) => {
 console.log('Loading classifier...');
 let classifier: TextClassificationPipeline | null = null;
 pipeline(...MODEL.config).then((c) => {
-  port?.postMessage({ type: MESSAGE.TYPE.READY });
+  port?.postMessage({ type: MessageType.READY });
   classifier = c;
   console.log('Classifier loaded');
 });
