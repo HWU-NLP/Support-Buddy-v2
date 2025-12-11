@@ -10,7 +10,7 @@ function setupClassifier() {
     c.onMessage.addListener((message) => {
         switch (message.type) {
             case MessageType.LOADING: console.log("Model is loading"); break;
-            case MessageType.READY: console.log("Model is ready"); break;
+            case MessageType.READY  : console.log("Model is ready"); break;
             case MessageType.RESULTS:
 
                 // Match results back to ids by index
@@ -37,6 +37,7 @@ function setupClassifier() {
     })
     return c;
 }
+
 let connected = false;
 let classifier = setupClassifier();
 
@@ -57,13 +58,13 @@ let decisions: Record<string, 0 | 1 | undefined> = {};
 
 const BATCH_SIZE = 1;
 let batch = {
-    ids: [] as string[],
+    ids  : [] as string[],
     texts: [] as string[]
 }
 
 // Find the virtual scroll container (the div with position:relative inside timeline)
-function findVirtualScrollContainer(): HTMLElement | null {
-    const timeline = document.querySelector('div[aria-label="Timeline: Your Home Timeline"], div[aria-label="Timeline: Conversation"]');
+function findVirtualScrollContainer(): HTMLElement | null { 
+    const timeline = document.querySelector('div[aria-label^="Timeline:"]');
 
     if (!timeline) return null;
 
@@ -150,3 +151,26 @@ if (document.readyState === 'complete' || document.readyState === 'interactive')
         rootObserver.disconnect();
     }
 }
+
+
+let lastHref = window.location.href;
+
+function reloadNewColumn() {
+    console.log("click registered");
+    const currentHref = window.location.href;
+    if (currentHref !== lastHref) {
+        console.log("column test triggered");
+        lastHref = currentHref;
+        // Disconnect first to avoid duplicate observers
+        rootObserver.disconnect();
+        rootObserver.observe(document.body, {
+            childList: true,
+            subtree: true,
+        });
+    }
+}
+
+
+['click'].forEach(evt => {
+    window.addEventListener(evt, reloadNewColumn, true);
+});
