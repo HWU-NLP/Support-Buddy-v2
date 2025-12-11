@@ -2,38 +2,46 @@ import { Tweet } from './tweet';
 
 import { MESSAGE_PORT, MessageType } from '../common/message';
 
-const classifier = chrome.runtime.connect({ name: MESSAGE_PORT });
-classifier.postMessage({ type: MessageType.STATUS });
+function setupClassifier() {
+    const c = chrome.runtime.connect({ name: MESSAGE_PORT });
+    connected = true;
+    c.postMessage({ type: MessageType.STATUS });
 
+    c.onMessage.addListener((message) => {
+        switch (message.type) {
+            case MessageType.LOADING: console.log("Model is loading"); break;
+            case MessageType.READY: console.log("Model is ready"); break;
+            case MessageType.RESULTS:
+
+                // Match results back to ids by index
+                // Note: results come back in the same order as inputs were sent
+                if (message.results && message.ids) {
+                    message.results.forEach((result: { label: 0 | 1; score: number }, index: number) => {
+                        const id = message.ids[index];
+                        console.log(id, " classification recieved")
+                        decisions[id] = result.label;
+
+                        if (elements[id]) {
+                            elements[id].setAttribute('gbvclass', result.label ? 'gbv' : 'benign');
+                            (elements[id] as HTMLElement).style.backgroundColor = '#00f';
+                        }
+                    });
+                }
+                break;
+            case MessageType.ERROR: console.log("Model error", message)
+        }
+    });
+    c.onDisconnect.addListener(() => {
+        connected = false;
+        console.log("Model disconnected");
+    })
+    return c;
+}
+let connected = false;
+let classifier = setupClassifier();
 
 let elements: Record<string, Element> = {};
 
-classifier.onMessage.addListener((message) => {
-    switch (message.type) {
-        case MessageType.LOADING: console.log("Model is loading"); break;
-        case MessageType.READY:   console.log("Model is ready");   break;
-        case MessageType.RESULTS:
-            // Match results back to ids by index
-            // Note: results come back in the same order as inputs were sent
-            if (message.results && message.ids) {
-                message.results.forEach((result: { label: 0 | 1; score: number }, index: number) => {
-                    const id = message.ids[index];
-                    console.log(id, " classification recieved")
-                    decisions[id] = result.label;
-                    
-                    if (elements[id]) {
-                        elements[id].setAttribute('gbvclass', result.label ? 'gbv' : 'benign');
-                        (elements[id] as HTMLElement).style.backgroundColor = '#00f';   
-                    }
-                });
-            }
-            break;
-        case MessageType.ERROR: console.log("Model error", message)
-    }
-});
-classifier.onDisconnect.addListener(() => {
-    console.log("Model disconected")
-});
 
 /**
  * 
@@ -50,15 +58,15 @@ let decisions: Record<string, 0 | 1 | undefined> = {};
 const BATCH_SIZE = 1;
 let batch = {
     ids: [] as string[],
-    texts: [] as string []
+    texts: [] as string[]
 }
 
 // Find the virtual scroll container (the div with position:relative inside timeline)
 function findVirtualScrollContainer(): HTMLElement | null {
     const timeline = document.querySelector('div[aria-label="Timeline: Your Home Timeline"], div[aria-label="Timeline: Conversation"]');
-        
+
     if (!timeline) return null;
-    
+
     // The virtual scroll container is the direct child div with position:relative
     const container = timeline.querySelector(':scope > div[style*="position: relative"]');
     return container as HTMLElement | null;
@@ -67,10 +75,10 @@ function findVirtualScrollContainer(): HTMLElement | null {
 function extractArticlesFromCell(cell: HTMLElement): void {
     const article = cell.querySelector('article[data-testid="tweet"]');
     if (!article) return;
-    
+
     const statusId = Tweet.statusIdFromElement(article);
     if (!statusId) return;
-    
+
     // Check if already observed (key exists in decisions)
     if (statusId in decisions) return;
 
@@ -87,14 +95,16 @@ function extractArticlesFromCell(cell: HTMLElement): void {
     elements[statusId] = article;
 
     if (batch.ids.length >= BATCH_SIZE) {
+        if (!connected) classifier = setupClassifier();
+
         classifier.postMessage({
             type: MessageType.CLASSIFY,
             texts: batch.texts,
-            ids: batch.ids  
+            ids: batch.ids
         });
         batch = { ids: [], texts: [] };
     }
-    
+
     article.setAttribute('gbvclass', 'pending');
     (article as HTMLElement).style.backgroundColor = '#0f0';
 }
@@ -112,15 +122,15 @@ const rootObserver = new MutationObserver(() => {
     if (container) {
         // Observe only childList changes (when cellInnerDiv elements are added/removed)
         // This is more efficient than subtree since we only care about direct children
-        virtualScrollObserver.observe(container, { 
+        virtualScrollObserver.observe(container, {
             childList: true,  // Only watch for added/removed children
             // subtree: false - not needed since cellInnerDiv is direct child
         });
-        
+
         // Extract any existing articles on initial load
         const existingCells = container.querySelectorAll('div[data-testid="cellInnerDiv"]');
         existingCells.forEach(cell => extractArticlesFromCell(cell as HTMLElement));
-        
+
         rootObserver.disconnect();
     }
 });

@@ -32,8 +32,6 @@ let port: chrome.runtime.Port | null = null;
 chrome.runtime.onConnect.addListener((p) => {
   if (p.name === MESSAGE_PORT) {
     port = p;
-
-
     p.onMessage.addListener(async (message) => {
       console.log("message recieved:", message)
       switch (message.type) {
@@ -63,16 +61,20 @@ chrome.runtime.onConnect.addListener((p) => {
     });
 
     console.log("port listener added")
-
   }
 });
 
+
+
 console.log('Loading classifier...');
 let classifier: TextClassificationPipeline | null = null;
-pipeline(...MODEL.config).then((c) => {
-  port?.postMessage({ type: MessageType.READY });
+const classifierPromise = pipeline(...MODEL.config).then((c) => {
   classifier = c;
   console.log('Classifier loaded');
+  return c;
+}).catch((err) => {
+  console.error("classifier died: ", err);
+  throw err;
 });
 
 
@@ -81,15 +83,19 @@ const normalise = (results: TextClassificationOutput | TextClassificationOutput[
   const r = results as RawModelResult[];
   const normalise = (label: 'GBV' | 'Not GBV' | '0' | '1'): 0 | 1 => {
     switch (label) {
-      case 'GBV':     case '1': return 1;
-      case 'Not GBV': case '0': return 0;
+      case '1': case 'GBV':     return 1;
+      case '0': case 'Not GBV': return 0;
     }
   }
   return r.map((result: RawModelResult) => ({ label: normalise(result.label), score: result.score }));
 }
 
-const classify = (texts: string[]): Promise<Result[]> => {
-  return classifier!(texts.map(MODEL.format)).then(normalise);
+const loadClassifier = async () => classifier ?? classifierPromise;
+
+const classify = async (texts: string[]): Promise<Result[]> => {
+  const c = await loadClassifier();
+  const outputs = await c(texts.map(MODEL.format))
+  return normalise(outputs);
 }
 
 
