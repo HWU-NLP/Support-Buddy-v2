@@ -10,11 +10,11 @@ article[gbvclass="benign"] {
 }
 */
 
-article[gbvclass="pending"] {
+article[gbv="UNKNOWN"] {
     opacity: 0;
 }
 
-article[gbvclass="gbv"], article[gbvclass="benign"] {
+article[gbv="1"], article[gbv="0"] {
     opacity: 1;
 }
 
