@@ -171,6 +171,4 @@ function reloadNewColumn() {
 }
 
 
-['click'].forEach(evt => {
-    window.addEventListener(evt, reloadNewColumn, true);
-});
+window.addEventListener('click', reloadNewColumn, true);
