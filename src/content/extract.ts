@@ -23,7 +23,7 @@ function setupClassifier() {
 
                         if (elements[id]) {
                             elements[id].setAttribute('gbvclass', result.label ? 'gbv' : 'benign');
-                            (elements[id] as HTMLElement).style.backgroundColor = result.label ? "#f00" : "#00f";
+                            // elements[id].style.backgroundColor = result.label ? "#f00" : "#00f";
                         }
                     });
                 }
@@ -41,7 +41,7 @@ function setupClassifier() {
 let connected = false;
 let classifier = setupClassifier();
 
-let elements: Record<string, Element> = {};
+let elements: Record<string, HTMLElement> = {};
 
 
 /**
@@ -55,7 +55,6 @@ let elements: Record<string, Element> = {};
 let decisions: Record<string, 0 | 1 | undefined> = {};
 
 
-
 const BATCH_SIZE = 1;
 let batch = {
     ids  : [] as string[],
@@ -63,52 +62,38 @@ let batch = {
 }
 
 // Extract articles from a cellInnerDiv
-function extractArticlesFromCell(cell: HTMLElement): void {
-    const article = cell.querySelector('article[data-testid="tweet"]');
-    if (!article) return;
-
-    const statusId = Tweet.statusIdFromElement(article);
-    if (!statusId) return;
+function extractArticlesFromCell(tweet: Tweet): void {
+    if (!connected) classifier = setupClassifier();
+    const statusId = tweet.statusId;
 
     // Check if already observed (key exists in decisions)
     if (statusId in decisions) {
-        if (article.getAttribute('gbvclass')) return;
+        if (tweet.element.getAttribute('gbvclass')) return;
 
-        article.setAttribute('gbvclass', decisions[statusId]? 'gbv' : 'benign');
-        (article as HTMLElement).style.backgroundColor = decisions[statusId] ? '#f00' : '#00f';
+        tweet.element.setAttribute('gbvclass', decisions[statusId]? 'gbv' : 'benign');
+        // tweet.element.style.backgroundColor = decisions[statusId] ? '#f00' : '#00f';
         return;
     };
 
     // Mark as observed, pending classification
     decisions[statusId] = undefined;
-    const tweet = Tweet.fromElement(article);
-
-
-    if (!tweet) return;
-
-    batch.ids.push(statusId);
-    batch.texts.push(tweet.text);
     console.log(statusId, tweet.author);
-    elements[statusId] = article;
+    elements[statusId] = tweet.element;
 
-    if (batch.ids.length >= BATCH_SIZE) {
-        if (!connected) classifier = setupClassifier();
 
-        classifier.postMessage({
-            type: MessageType.CLASSIFY,
-            texts: batch.texts,
-            ids: batch.ids
-        });
-        batch = { ids: [], texts: [] };
-    }
+    classifier.postMessage({
+        type: MessageType.CLASSIFY,
+        texts: [tweet.text],
+        ids: [statusId]
+    });
 
-    article.setAttribute('gbvclass', 'pending');
-    (article as HTMLElement).style.backgroundColor = '#0f0';
+    tweet.element.setAttribute('gbvclass', 'pending');
+    // tweet.element.style.backgroundColor = '#0f0';
 }
 
 // Set up timeline observer with extractArticlesFromCell as the processor
 const timelineObserver = new TimelineObserver({
-    onCellAdded: extractArticlesFromCell,
+    onTweetAdded: extractArticlesFromCell,
     onNavigationChange: () => {
         console.log("column test triggered");
     }
