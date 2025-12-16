@@ -1,15 +1,17 @@
+import { Tweet } from "./tweet";
+
 /**
  * Common observer pattern for watching Twitter timeline and processing article nodes.
  * Provides abstraction for different types of processing functions on article nodes.
  */
 
-export type CellProcessor = (cell: HTMLElement) => void;
+export type TweetProcessor = (tweet: Tweet) => void;
 
 export interface TimelineObserverOptions {
     /**
      * Function to call when a new cell (cellInnerDiv) is added to the timeline
      */
-    onCellAdded?: CellProcessor;
+    onTweetAdded?: TweetProcessor;
     
     /**
      * Function to call when navigation changes (e.g., URL change)
@@ -24,13 +26,13 @@ export interface TimelineObserverOptions {
 export class TimelineObserver {
     private rootObserver: MutationObserver;
     private virtualScrollObserver: MutationObserver | null = null;
-    private cellProcessor: CellProcessor;
+    private tweetProcessor: TweetProcessor;
     private navigationChangeHandler?: () => void;
     private lastHref: string = window.location.href;
     private isObserving: boolean = false;
 
     constructor(options: TimelineObserverOptions) {
-        this.cellProcessor = options.onCellAdded || (() => {});
+        this.tweetProcessor = options.onTweetAdded || (() => {});
         this.navigationChangeHandler = options.onNavigationChange;
         
         this.rootObserver = new MutationObserver(() => {
@@ -69,7 +71,11 @@ export class TimelineObserver {
             mutations.forEach(mutation => {
                 mutation.addedNodes.forEach(node => {
                     if (node instanceof HTMLElement) {
-                        this.cellProcessor(node);
+                        const article = node.querySelector('article[data-testid="tweet"]');
+                        if (!article) return;
+                        const tweet = Tweet.fromElement(article);
+                        if (!tweet) return;
+                        this.tweetProcessor(tweet);
                     }
                 });
             });
@@ -88,7 +94,11 @@ export class TimelineObserver {
         const existingCells = container.querySelectorAll('div[data-testid="cellInnerDiv"]');
         existingCells.forEach(cell => {
             if (cell instanceof HTMLElement) {
-                this.cellProcessor(cell);
+                const article = cell.querySelector('article[data-testid="tweet"]');
+                if (!article) return;
+                const tweet = Tweet.fromElement(article);
+                if (!tweet) return;
+                this.tweetProcessor(tweet);
             }
         });
     }

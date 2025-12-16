@@ -10,7 +10,6 @@ const fa_ban = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640"><!
 const fa_warn = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640"><!--!Font Awesome Free v7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2025 Fonticons, Inc.--><path d="M320 96C239.2 96 174.5 132.8 127.4 176.6C80.6 220.1 49.3 272 34.4 307.7C31.1 315.6 31.1 324.4 34.4 332.3C49.3 368 80.6 420 127.4 463.4C174.5 507.1 239.2 544 320 544C400.8 544 465.5 507.2 512.6 463.4C559.4 419.9 590.7 368 605.6 332.3C608.9 324.4 608.9 315.6 605.6 307.7C590.7 272 559.4 220 512.6 176.6C465.5 132.9 400.8 96 320 96zM176 320C176 240.5 240.5 176 320 176C399.5 176 464 240.5 464 320C464 399.5 399.5 464 320 464C240.5 464 176 399.5 176 320zM320 256C320 291.3 291.3 320 256 320C244.5 320 233.7 317 224.3 311.6C223.3 322.5 224.2 333.7 227.2 344.8C240.9 396 293.6 426.4 344.8 412.7C396 399 426.4 346.3 412.7 295.1C400.5 249.4 357.2 220.3 311.6 224.3C316.9 233.6 320 244.4 320 256z"/></svg>`
 
 
-// Import CSS file to ensure Parcel bundles it
 import "./ui.css";
 
 enum HideOption {
@@ -58,42 +57,6 @@ chrome.storage.onChanged.addListener((changes, areaName) => {
   if (helpContent) settings.help ? helpContent.classList.remove('hidden') : helpContent.classList.add('hidden');
   console.log('Settings changed:', settings)
 });
-class Tweets {
-  private map: Map<string, Tweet>;
-
-  constructor() {
-    this.map = new Map<string, Tweet>();
-  }
-
-  get(statusId: string): Tweet | undefined {
-    return this.map.get(statusId);
-  }
-
-  set(statusId: string, tweet: Tweet): void {
-    this.map.set(statusId, tweet);
-  }
-
-  has(statusId: string): boolean {
-    return this.map.has(statusId);
-  }
-  clear(): void {
-    this.map.clear();
-  }
-}
-
-
-function classify(batch: Tweet[]) {
-  chrome.runtime.sendMessage({ type: 'CLASSIFY', batch });
-  return new Promise((resolve, reject) => {
-    chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-      if (message.type === 'CLASSIFY_RESPONSE') {
-        resolve(message.response);
-      }
-    });
-  });
-}
-
-const tweets = new Tweets();
 
 // Function to suspend all video playback
 function suspendAllVideos() {
@@ -112,8 +75,6 @@ document.addEventListener('play', (e) => {
     target.pause();
   }
 }, true); // Use capture phase to catch events early
-
-// Set up observer for dynamically loaded tweets
 
 
 function insertBadge(article: HTMLElement, statusId: string) {
@@ -345,7 +306,7 @@ function annotateModal(article: HTMLElement, statusId: string) {
     infoBubbleElem.style.left = `${articleRect.right}px`;
     infoBubbleElem.classList.add('show');
   
-  // Add click handler to close button  
+    // Add click handler to close button  
     const closeButton = infoBubbleElem.querySelector('.support-buddy-close-button') as HTMLElement | null;
     if (closeButton) {
       closeButton.onclick = exitModal;
@@ -383,20 +344,6 @@ function censor(article: HTMLElement, statusId: string) {
       setTimeout(() => badge?.classList.add('emphasis'), 200);
       setTimeout(() => { overlay.remove(); badge?.classList.remove('emphasis'); }, 1000);
     });
-    // a debug feature to remove all injected elements
-    overlay.addEventListener('contextmenu', function handler(e) {
-      e.preventDefault();
-      article.classList.remove('support-buddy-censor');
-      overlay.remove();
-      badge?.remove();
-    });
-
-    // re censor the article if the context menu is clicked
-    article.addEventListener('contextmenu', function handler(e) {
-      e.preventDefault();
-      insertBadge(article, statusId);
-      censor(article, statusId);
-    });
   }
 
   // Insert custom content into the overlay when obscuring
@@ -420,12 +367,6 @@ function block(article: HTMLElement) {
 function triggerXReportAction(article: HTMLElement, statusId: string) {
   // Find the original tweet element (not the cloned one)
   // The article parameter in annotateModal is the original tweet
-  const tweet = tweets.get(statusId);
-
-  if (!tweet) console.error('Tweet not found for statusId:', statusId);
-
-  console.log('Reporting Tweet (statusId:', statusId, '):', tweet);
-  console.log('URL:', `https://x.com/${tweet?.author}/status/${statusId}`);
 
   // Method 1: Find the menu button (three dots) - common data-testid values
   const menuButton = article.querySelector('[data-testid="caret"]') as HTMLElement;
@@ -465,11 +406,27 @@ function triggerXReportAction(article: HTMLElement, statusId: string) {
   }
 }
 
-function injectUIElements(node: HTMLElement) {
+function injectUIElements(tweet: Tweet) {
+  const gbvClass = tweet.element.getAttribute('gbvclass');
   
+  if (gbvClass === 'gbv') {
+    if (!settings.hideIt) {
+      insertBadge(tweet.element, tweet.statusId);
+    } else {
+      switch (settings.hideOption) {
+        case HideOption.Block:
+          block(tweet.element);
+          break;
+        case HideOption.Obscure: case HideOption.Reveal:
+          censor(tweet.element, tweet.statusId);
+          break;
+      }
+    }
+  }
 }
 
 // Set up timeline observer with injectUIElements as the processor
 const timelineObserver = new TimelineObserver({
-    onCellAdded: injectUIElements
+    onTweetAdded: injectUIElements
 });
+

@@ -1,6 +1,6 @@
 
 export class Tweet {
-    element: Element;
+    element: HTMLElement;
     text: string;
     statusId: string;
     author: string;
@@ -21,7 +21,7 @@ export class Tweet {
         videoUrl?: string,
         classification?: number
     ) {
-        this.element = element;
+        this.element = element as HTMLElement;
         this.text = text;
         this.statusId = statusId;
         this.author = author;
