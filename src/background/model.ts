@@ -1,20 +1,6 @@
 import { pipeline, TextClassificationOutput, TextClassificationPipeline } from "@huggingface/transformers";
 import { MESSAGE_PORT, MessageType } from "../common/message";
-
-export const MODEL = {
-    config: [
-      'text-classification',
-      'Heriot-WattUniversity/gbv-classifier-roberta-base-instruct-ONNX',
-      {
-        dtype: 'q4',
-        device: 'webgpu',
-      }
-    ] as const,
-    format: (input: string) => `Classify the following message from a social media platform. It might contain a form of gender-based violence (GBV). Output 1 if it contains GBV, or 0 if not.  
-    Text: ${input} 
-    Choices: 1 for GBV, or 0 for Not GBV.
-    Answer: `,  
-};
+import { BERT as MODEL } from "./model_configs";
 
 
 type Result = {
