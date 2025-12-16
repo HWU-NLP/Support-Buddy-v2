@@ -1,0 +1,468 @@
+/* Support Buddy Content Styles for X (Twitter) Page */
+
+/* Badge Icon Styles */
+.support-buddy-badge-icon {
+    transform: scale(1);
+    transition: transform 0.2s ease, background 0.2s ease;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-radius: 8px;
+    background: #9D5DC5;
+    padding: 8px 16px;
+    font-family: 'Inter', Arial, sans-serif;
+    font-size: 16px;
+    font-weight: 600;
+    color: #fff;
+    box-sizing: border-box;
+    border: none;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  }
+  
+  
+  .support-buddy-badge-icon svg {
+    fill: #fff;
+  }
+  
+  
+  .support-buddy-badge:not(.disabled) button.support-buddy-badge-icon:hover {
+    transform: scale(1.02);
+  }
+  
+  .support-buddy-badge.emphasis button.support-buddy-badge-icon {
+    transform: scale(1.05);
+  }
+  
+  .support-buddy-badge.emphasis button.support-buddy-badge-icon::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 100%;
+    height: 100%;
+    background: #9D5DC5;
+    border-radius: 10px;
+    transform: translate(-50%, -50%) scale;
+    opacity: 0.6;
+    pointer-events: none;
+    z-index: 0;
+    animation: support-buddy-ripple-expand 0.65s cubic-bezier(0.25, 0.8, 0.25, 1) forwards;
+  }
+  
+  @keyframes support-buddy-ripple-expand {
+    0% {
+      transform: translate(-50%, -50%);
+    }
+    100% {
+      transform: translate(-50%, -50%);
+      width: calc(100% + 10px);
+      height: calc(100% + 10px);
+    }
+  }
+  
+  
+  
+  /* Inactive style when badge icon is a sibling of censor overlay */
+  .support-buddy-badge.disabled .support-buddy-badge-icon, .support-buddy-badge.disabled .support-buddy-badge-text {
+    background: #fff;
+    color: #9D5DC5;
+    pointer-events: none;
+  }
+  
+  .support-buddy-badge.disabled .support-buddy-badge-icon svg {
+    fill: #9D5DC5;
+  }
+  
+  
+  
+  .support-buddy-badge-text {
+    color: #fff; 
+    font-family: 'Inter', Arial, sans-serif;
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    white-space: nowrap;
+  }
+  
+  .support-buddy-badge {
+    z-index: 9999;
+    position: absolute;
+    top: -4px;  
+    right: 8px; 
+  }
+  
+  .support-buddy-badge-tooltip {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    background: #fff;
+    color: #9D5DC5;
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-family: 'Inter', Arial, sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 1.4;
+    white-space: normal;
+    max-width: 280px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(4px);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    z-index: 10000;
+  }
+  
+  .support-buddy-badge.disabled:hover .support-buddy-badge-tooltip {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+  }
+  
+  .support-buddy-badge:not(.disabled):hover .support-buddy-badge-tooltip {
+    display: none;
+  }
+  
+  
+  
+  
+  /* Block Styles */
+  .support-buddy-block {
+    display: none !important;
+  }
+  
+  /* Annotation Overlay Styles */
+  .support-buddy-backdrop {
+    overflow-y: auto;
+    padding-bottom: 40px;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh; 
+    background: rgba(0, 0, 0, 0.1);
+    z-index: 9999;
+    pointer-events: none;
+    backdrop-filter: blur(4px);
+    transition: opacity 0.3s ease;
+    opacity: 0;
+    will-change: opacity;
+  }
+  
+  html.support-buddy-annotate, body.support-buddy-annotate {
+    overflow-y: hidden !important;
+    height: auto !important;
+  }
+  
+  #support-buddy-annotated-article {
+    position: fixed;
+    overflow: hidden;
+    pointer-events: auto; 
+    background: var(--article-bg, #fff);
+    border-radius: 8px;
+    padding-left: 16px;
+    padding-right: 16px;
+    padding-bottom: 12px;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+    z-index: 10000;
+    transition: transform 0.1s ease-out, opacity 0.1s ease-out;
+    will-change: transform, opacity;
+  }
+  
+  /* Ensure context menus are on top of the annotated article */
+  div[role="menu"] {
+    z-index: 10010 !important;
+  }
+  
+  /* Article positioning for badge */
+  .support-buddy-article-with-badge {
+    position: relative;
+  }
+  
+  
+  
+  /* =============== Modal content styles =================== */
+  
+  .support-buddy-info-bubble {
+    z-index: 10000;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+    position: fixed;
+    top: 20%;
+    max-width: 320px;
+    background: #fff;
+    color: #641a69;
+    border-radius: 8px;
+    padding: 18px 18px 18px 18px;
+    box-shadow: 0 2px 14px rgba(79, 3, 98, 0.14);
+    margin-left: 32px;
+  }
+  
+  
+  .hidden {
+    display: none;
+  }
+  
+  .actions-header {
+    color: #641a69;
+    font-size: 15px;
+    font-weight: 700;
+    margin-bottom: 16px;
+    padding-right: 30px;
+  }
+  
+  
+  
+  .alert-message {
+    background: #f8e7f8;
+    color: #641a69;
+    padding: 14px 16px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    font-size: 12px;
+    line-height: 1.5;
+    font-weight: 500;
+  }
+  
+  
+  .actions-content {
+    border-top: 1px solid #e5e7eb;
+  }
+  .actions-text {
+    color: #374151;
+    font-size: 15px;
+    line-height: 1.6;
+    margin-bottom: 12px;
+    margin-top: 12px;
+  }
+  
+  .actions-text:last-child {
+    margin-bottom: 0;
+  }
+  
+  .actions-link {
+    color: #9D5DC5;
+    text-decoration: underline;
+    font-weight: 500;
+    cursor: pointer;
+  }
+  
+  .actions-link:hover {
+    color: #8a4fb3;
+  }
+  
+  .actions-note {
+    font-size: 12px;
+    color: #6b7280;
+    font-style: italic;
+    margin-top: 12px;
+    margin-bottom: 12px;
+  }
+  
+  button.action-button {
+    width: 100%;
+  }
+  
+  .action-button {
+    padding: 8px 12px;
+    border: none;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-bottom: 8px;
+    font-family: inherit;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    position: relative;
+  }
+  
+  h3.actions-text {
+    font-weight: 600;
+  }
+  
+  .action-button:last-child {
+    margin-bottom: 0;
+  }
+  
+  .action-button-primary {
+    background: linear-gradient(135deg, #9D5DC5 0%, #8a4fb3 100%);
+    color: white;
+    box-shadow: 0 4px 12px rgba(157, 93, 197, 0.3);
+  }
+  
+  .action-button-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(157, 93, 197, 0.4);
+  }
+  
+  .action-button-primary:active {
+    transform: translateY(0);
+  }
+  
+  .action-button-secondary {
+    background: white;
+    color: #641a69;
+    border: 2px solid #9D5DC5;
+  }
+  
+  .action-button-secondary:hover {
+    background: #f8e7f8;
+    transform: translateY(-1px);
+  }
+  
+  .action-button-tertiary {
+    background: #f9fafb;
+    color: #6b7280;
+    border: 1px solid #e5e7eb;
+  }
+  
+  .action-button-tertiary:hover {
+    background: #f3f4f6;
+    border-color: #d1d5db;
+  }
+  
+  .button-icon {
+    width: 20px;
+    height: 20px;
+  }
+  
+  
+  .support-buddy-info-bubble {
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    opacity: 0;
+    transform: translateY(10px);
+    will-change: transform, opacity;
+  }
+  
+  .support-buddy-info-bubble.show {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  
+  .support-buddy-close-button {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #641a69;
+    border-radius: 4px;
+    transition: background-color 0.2s ease, transform 0.2s ease;
+    z-index: 1;
+  }
+  
+  .support-buddy-close-button:hover {
+    background-color: rgba(100, 26, 105, 0.1);
+    transform: scale(1.1);
+  }
+  
+  .support-buddy-close-button:active {
+    transform: scale(0.95);
+  }
+  
+  /* =============== Censor overlay content styles =================== */
+  /* Censor Styles */
+  /* 
+  article.support-buddy-censor div[data-testid="tweetPhoto"], article.support-buddy-censor video{
+    filter: blur(16px);
+  }
+  
+  article.support-buddy-censor div[data-testid="tweetText"] span {
+    filter: blur(4px);
+  } */
+  
+  .support-buddy-censor-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    backdrop-filter: blur(12px) saturate(180%);
+    /* background: linear-gradient(135deg, rgba(157, 93, 197, 0.15) 0%, rgba(100, 26, 105, 0.25) 100%); */
+    background: #fffa;
+    transition: opacity 0.3s ease, backdrop-filter 0.3s ease, background 0.3s ease;
+    will-change: opacity;
+    pointer-events: auto;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+    z-index: 10;
+    border-radius: 12px;
+  }
+  
+  .support-buddy-censor-overlay:hover {
+    background: linear-gradient(135deg, rgba(157, 93, 197, 0.2) 0%, rgba(100, 26, 105, 0.3) 100%);
+  }
+  
+  .support-buddy-censor-overlay.reveal {
+    backdrop-filter: blur(0);
+    opacity: 0;
+    pointer-events: none;
+    cursor: default;
+  }
+  
+  .support-buddy-censor-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    width: 100%;
+    color: #641a69;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+    box-sizing: border-box;
+    position: relative;
+  }
+  
+  .support-buddy-censor-icon {
+    margin-bottom: 0;
+    height: 36px;
+    /* max-height: 100px; */
+    /* min-height: 20px; */
+    aspect-ratio: 1/1;
+    fill: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    padding: 5px;
+    margin-bottom: 5px;
+    background: #9D5DC5;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(157, 93, 197, 0.2), 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  
+  .support-buddy-censor-overlay:hover .support-buddy-censor-icon {
+    transform: scale(1.05);
+    box-shadow: 0 6px 24px rgba(157, 93, 197, 0.3), 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+  
+  .support-buddy-censor-icon svg {
+    width: 100%;
+    height: 100%;
+    filter: drop-shadow(0 2px 4px rgba(157, 93, 197, 0.2));
+  }
+  
+  .support-buddy-censor-title {
+    color: #641a69;
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 0;
+    text-align: center;
+    flex-shrink: 0;
+    line-height: 1.3;
+    letter-spacing: -0.01em;
+  }
+  
+  .support-buddy-censor-overlay:hover .support-buddy-censor-title {
+    color: #fff;
+  }
+  

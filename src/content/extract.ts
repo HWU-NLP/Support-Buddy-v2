@@ -1,5 +1,5 @@
 import { Tweet } from './tweet';
-
+import { TimelineObserver } from './timelineObserver';
 import { MESSAGE_PORT, MessageType } from '../common/message';
 
 function setupClassifier() {
@@ -7,10 +7,10 @@ function setupClassifier() {
     connected = true;
     c.postMessage({ type: MessageType.STATUS });
 
-    c.onMessage.addListener((message) => {
+    c.onMessage.addListener((message: any) => {
         switch (message.type) {
             case MessageType.LOADING: console.log("Model is loading"); break;
-            case MessageType.READY  : console.log("Model is ready"); break;
+            case MessageType.READY  : console.log("Model is ready");   break;
             case MessageType.RESULTS:
 
                 // Match results back to ids by index
@@ -62,16 +62,6 @@ let batch = {
     texts: [] as string[]
 }
 
-// Find the virtual scroll container (the div with position:relative inside timeline)
-function findVirtualScrollContainer(): HTMLElement | null { 
-    const timeline = document.querySelector('div[aria-label^="Timeline:"]');
-
-    if (!timeline) return null;
-
-    // The virtual scroll container is the direct child div with position:relative
-    const container = timeline.querySelector(':scope > div[style*="position: relative"]');
-    return container as HTMLElement | null;
-}
 // Extract articles from a cellInnerDiv
 function extractArticlesFromCell(cell: HTMLElement): void {
     const article = cell.querySelector('article[data-testid="tweet"]');
@@ -81,7 +71,13 @@ function extractArticlesFromCell(cell: HTMLElement): void {
     if (!statusId) return;
 
     // Check if already observed (key exists in decisions)
-    if (statusId in decisions) return;
+    if (statusId in decisions) {
+        if (article.getAttribute('gbvclass')) return;
+
+        article.setAttribute('gbvclass', decisions[statusId]? 'gbv' : 'benign');
+        (article as HTMLElement).style.backgroundColor = decisions[statusId] ? '#f00' : '#00f';
+        return;
+    };
 
     // Mark as observed, pending classification
     decisions[statusId] = undefined;
@@ -110,66 +106,10 @@ function extractArticlesFromCell(cell: HTMLElement): void {
     (article as HTMLElement).style.backgroundColor = '#0f0';
 }
 
-// Observer for the virtual scroll container - watches for new cellInnerDiv additions
-const virtualScrollObserver = new MutationObserver(mutations => {
-    mutations.forEach(mutation => {
-        mutation.addedNodes.forEach(node => extractArticlesFromCell(node as HTMLElement));
-    });
-});
-
-// Root observer to find and set up observation on the virtual scroll container
-const rootObserver = new MutationObserver(() => {
-    const container = findVirtualScrollContainer();
-    if (container) {
-        // Observe only childList changes (when cellInnerDiv elements are added/removed)
-        // This is more efficient than subtree since we only care about direct children
-        virtualScrollObserver.observe(container, {
-            childList: true,  // Only watch for added/removed children
-            // subtree: false - not needed since cellInnerDiv is direct child
-        });
-
-        // Extract any existing articles on initial load
-        const existingCells = container.querySelectorAll('div[data-testid="cellInnerDiv"]');
-        existingCells.forEach(cell => extractArticlesFromCell(cell as HTMLElement));
-
-        rootObserver.disconnect();
-    }
-});
-
-rootObserver.observe(document.body, {
-    childList: true,
-    subtree: true,
-});
-
-// Also try to find container immediately if DOM is already loaded
-if (document.readyState === 'complete' || document.readyState === 'interactive') {
-    const container = findVirtualScrollContainer();
-    if (container) {
-        virtualScrollObserver.observe(container, { childList: true });
-        const existingCells = container.querySelectorAll('div[data-testid="cellInnerDiv"]');
-        existingCells.forEach(cell => extractArticlesFromCell(cell as HTMLElement));
-        rootObserver.disconnect();
-    }
-}
-
-
-let lastHref = window.location.href;
-
-function reloadNewColumn() {
-    console.log("click registered");
-    setTimeout(() => {        
-    const currentHref = window.location.href;
-    if (currentHref !== lastHref) {
+// Set up timeline observer with extractArticlesFromCell as the processor
+const timelineObserver = new TimelineObserver({
+    onCellAdded: extractArticlesFromCell,
+    onNavigationChange: () => {
         console.log("column test triggered");
-        lastHref = currentHref;
-        // Disconnect first to avoid duplicate observers
-        rootObserver.disconnect();
-        rootObserver.observe(document.body, {
-            childList: true,
-            subtree: true,
-        });
     }
-    }, 20);
-}
-
-window.addEventListener('click', reloadNewColumn, true);
+});

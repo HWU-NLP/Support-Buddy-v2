@@ -7,7 +7,7 @@ module.exports = {
   devtool: process.env.NODE_ENV === 'production' ? false : 'cheap-module-source-map',
   
   entry: {
-    popup: './src/controls/Popup.tsx',
+    popup: './src/controls/main.tsx',
     extract: './src/content/extract.ts',
     ui: './src/content/ui.ts',
     model: './src/background/model.ts',
