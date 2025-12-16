@@ -23,7 +23,7 @@ function setupClassifier() {
 
                         if (elements[id]) {
                             elements[id].setAttribute('gbvclass', result.label ? 'gbv' : 'benign');
-                            (elements[id] as HTMLElement).style.backgroundColor = '#00f';
+                            (elements[id] as HTMLElement).style.backgroundColor = result.label ? "#f00" : "#00f";
                         }
                     });
                 }
@@ -157,6 +157,7 @@ let lastHref = window.location.href;
 
 function reloadNewColumn() {
     console.log("click registered");
+    setTimeout(() => {        
     const currentHref = window.location.href;
     if (currentHref !== lastHref) {
         console.log("column test triggered");
@@ -168,7 +169,7 @@ function reloadNewColumn() {
             subtree: true,
         });
     }
+    }, 20);
 }
-
 
 window.addEventListener('click', reloadNewColumn, true);
