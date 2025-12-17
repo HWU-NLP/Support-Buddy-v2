@@ -80,13 +80,11 @@ function extractArticlesFromCell(cell: HTMLElement): void {
         return;
     };
 
-
     if (!connected) classifier = setupClassifier();
     // Mark as observed, pending classification
     decisions[tweet.statusId] = undefined;
     console.log(tweet.statusId, tweet.author);
     elements[tweet.statusId] = tweet.element;
-
 
     classifier.postMessage({
         type: MessageType.CLASSIFY,
@@ -94,11 +92,10 @@ function extractArticlesFromCell(cell: HTMLElement): void {
         ids: [tweet.statusId]
     });
 
-    tweet.element.setAttribute('gbv', 'UNKNOWN');
+    // tweet.element.setAttribute('gbv', '');
     // tweet.element.style.backgroundColor = '#0f0';
 }
 
-// Observer for the virtual scroll container - watches for new cellInnerDiv additions
 const virtualScrollObserver = new MutationObserver(mutations => {
     mutations.forEach(mutation => {
         mutation.addedNodes.forEach(node => {
@@ -127,7 +124,6 @@ const rootObserver = new MutationObserver(() => {
         // This is more efficient than subtree since we only care about direct children
         virtualScrollObserver.observe(container, {
             childList: true,  // Only watch for added/removed children
-            // subtree: false - not needed since cellInnerDiv is direct child
         });
 
         // Extract any existing articles on initial load
@@ -164,7 +160,6 @@ let lastHref = window.location.href;
         setTimeout(() => {
             const currentHref = window.location.href;
             if (currentHref !== lastHref) {
-                console.log("column test triggered");
                 lastHref = currentHref;
                 // Disconnect first to avoid duplicate observers
                 rootObserver.disconnect();

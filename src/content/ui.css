@@ -1,16 +1,23 @@
 /* Support Buddy Content Styles for X (Twitter) Page */
 
 /* DEBUG STYLES */
-
-/* article[gbvclass="gbv"] {
+/* 
+article:not([gbv]) {
+    background-color: #0f0;
+}
+article[gbv="1"] {
     background-color: #f00;
 }
-article[gbvclass="benign"] {
+article[gbv="0"] {
     background-color: #00f;
-}
-*/
+} */
 
-article[gbv="UNKNOWN"] {
+article {
+  transition: opacity 0.2s ease;
+  will-change: opacity;
+}
+
+article:not([gbv]) {
     opacity: 0;
 }
 

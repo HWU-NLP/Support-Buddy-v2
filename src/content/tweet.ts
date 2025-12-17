@@ -65,7 +65,7 @@ export class Tweet {
         const imageUrls: string[] = [];
         let imageCaption: string | undefined;
 
-        const a = article.querySelector('a[href*="/status/"][href*="/analytics"]');
+        const a = article.querySelector('a[href*="/status/"]');
         if (!a) return null;
         const statusUrl = a.getAttribute('href') || '';
 
