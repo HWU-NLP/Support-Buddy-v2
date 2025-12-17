@@ -53,7 +53,7 @@ export class Tweet {
     }
 
     static statusIdFromElement(article: Element): string | null {
-        const a = article.querySelector('a[href*="/status/"][href*="/analytics"]');
+        const a = article.querySelector('a[href*="/status/"]');
         if (!a) return null;
         // /author/status/1990849576811499961/analytics
         const id = a.getAttribute('href')?.split('/')[3];
