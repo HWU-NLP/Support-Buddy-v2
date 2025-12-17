@@ -100,22 +100,28 @@ function getOverlayPosition(article: HTMLElement, overlay: HTMLElement) {
 }
 
 
-// Create backdrop overlay that covers the entire page
-const backdrop = document.createElement('div');
-backdrop.className = 'support-buddy-backdrop';
-backdrop.style.pointerEvents = 'none';
-document.body.appendChild(backdrop);  
+// Create backdrop overlay that covers the entire page (only if it doesn't exist)
+let backdrop = document.querySelector('.support-buddy-backdrop') as HTMLDivElement;
+if (!backdrop) {
+  backdrop = document.createElement('div');
+  backdrop.className = 'support-buddy-backdrop';
+  backdrop.style.pointerEvents = 'none';
+  document.body.appendChild(backdrop);
+}
 
 // Container for the section and buttons
 // const right = document.createElement('div');
 // right.className = 'support-buddy-right-section';
 // document.body.appendChild(right);
 
-
-const infoBubble = document.createElement('div');
-infoBubble.className = 'support-buddy-info-bubble';
-infoBubble.innerHTML = infoBubbleTemplate;
-backdrop.appendChild(infoBubble);
+// Create infoBubble only if it doesn't exist
+let infoBubble = backdrop.querySelector('.support-buddy-info-bubble') as HTMLDivElement;
+if (!infoBubble) {
+  infoBubble = document.createElement('div');
+  infoBubble.className = 'support-buddy-info-bubble';
+  infoBubble.innerHTML = infoBubbleTemplate;
+  backdrop.appendChild(infoBubble);
+}
 !settings.reportIt && infoBubble.querySelector('.support-buddy-report-content')?.classList.add('hidden');
 !settings.help && infoBubble.querySelector('.support-buddy-help-content')?.classList.add('hidden');
 
@@ -292,10 +298,10 @@ function triggerXReportAction(article: HTMLElement, statusId: string) {
   }
 }
 
-function injectUIElements(tweet: Tweet) {
-  const gbvClass = tweet.element.getAttribute('gbvclass');
+export function injectUIElements(tweet: Tweet) {
+  const gbv = tweet.element.getAttribute('gbv');
   
-  if (gbvClass === 'gbv') {
+  if (gbv === '1') {
     if (!settings.hideIt) {
       insertBadge(tweet.element, tweet.statusId);
     } else {
@@ -312,8 +318,4 @@ function injectUIElements(tweet: Tweet) {
   }
 }
 
-// Set up timeline observer with injectUIElements as the processor
-const timelineObserver = new TimelineObserver({
-    onTweetAdded: injectUIElements
-});
 
