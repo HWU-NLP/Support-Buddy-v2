@@ -18,7 +18,7 @@ function setupClassifier() {
                 if (message.results && message.ids) {
                     message.results.forEach((result: { label: 0 | 1; score: number }, index: number) => {
                         const id = message.ids[index];
-                        console.log(id, " classification recieved")
+                        console.log(id, " classification recieved:", result.label ? 'Positive' : '0');
                         decisions[id] = result.label;
 
                         if (elements[id]) {
@@ -70,6 +70,7 @@ function extractArticlesFromCell(tweet: Tweet): void {
     if (statusId in decisions) {
         if (tweet.element.getAttribute('gbvclass')) return;
 
+
         tweet.element.setAttribute('gbvclass', decisions[statusId]? 'gbv' : 'benign');
         // tweet.element.style.backgroundColor = decisions[statusId] ? '#f00' : '#00f';
         return;
@@ -94,7 +95,4 @@ function extractArticlesFromCell(tweet: Tweet): void {
 // Set up timeline observer with extractArticlesFromCell as the processor
 const timelineObserver = new TimelineObserver({
     onTweetAdded: extractArticlesFromCell,
-    onNavigationChange: () => {
-        console.log("column test triggered");
-    }
 });

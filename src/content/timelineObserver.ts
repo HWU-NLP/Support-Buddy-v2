@@ -12,11 +12,6 @@ export interface TimelineObserverOptions {
      * Function to call when a new cell (cellInnerDiv) is added to the timeline
      */
     onTweetAdded?: TweetProcessor;
-    
-    /**
-     * Function to call when navigation changes (e.g., URL change)
-     */
-    onNavigationChange?: () => void;
 }
 
 /**
@@ -27,14 +22,12 @@ export class TimelineObserver {
     private rootObserver: MutationObserver;
     private virtualScrollObserver: MutationObserver | null = null;
     private tweetProcessor: TweetProcessor;
-    private navigationChangeHandler?: () => void;
     private lastHref: string = window.location.href;
     private isObserving: boolean = false;
 
     constructor(options: TimelineObserverOptions) {
-        this.tweetProcessor = options.onTweetAdded || (() => {});
-        this.navigationChangeHandler = options.onNavigationChange;
-        
+        this.tweetProcessor = options.onTweetAdded || (() => { });
+
         this.rootObserver = new MutationObserver(() => {
             const container = this.findVirtualScrollContainer();
             if (container) {
@@ -131,10 +124,8 @@ export class TimelineObserver {
             });
         }
 
-        // Set up navigation change handler if provided
-        if (this.navigationChangeHandler) {
-            window.addEventListener('click', this.handleNavigationChange.bind(this), true);
-        }
+        // Set up navigation change handler to trigger on click events
+        window.addEventListener('click', this.handleNavigationChange, true);
     }
 
     /**
@@ -149,30 +140,26 @@ export class TimelineObserver {
             this.virtualScrollObserver.disconnect();
         }
 
-        if (this.navigationChangeHandler) {
-            window.removeEventListener('click', this.handleNavigationChange.bind(this), true);
-        }
+        window.removeEventListener('click', this.handleNavigationChange, true);
+    }
+
+    private restart(): void {
+        this.stop();
+        this.start();
     }
 
     /**
      * Handle navigation changes (e.g., clicking on different columns)
      */
     private handleNavigationChange(): void {
-        const currentHref = window.location.href;
-        if (currentHref !== this.lastHref) {
-            this.lastHref = currentHref;
-            
-            // Disconnect and restart observation
-            this.rootObserver.disconnect();
-            if (this.virtualScrollObserver) {
-                this.virtualScrollObserver.disconnect();
+        setTimeout(() => {
+            const currentHref = window.location.href;
+            if (currentHref !== this.lastHref) {
+                this.lastHref = currentHref;
+
+                this.restart();
             }
-            
-            this.rootObserver.observe(document.body, {
-                childList: true,
-                subtree: true,
-            });
-        }
+        }, 500);
     }
 
     /**

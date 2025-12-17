@@ -418,6 +418,7 @@ function injectUIElements(tweet: Tweet) {
           block(tweet.element);
           break;
         case HideOption.Obscure: case HideOption.Reveal:
+          insertBadge(tweet.element, tweet.statusId);
           censor(tweet.element, tweet.statusId);
           break;
       }
