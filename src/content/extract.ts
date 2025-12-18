@@ -68,7 +68,10 @@ function extractArticlesFromCell(cell: HTMLElement): void {
     const article = cell.querySelector('article[data-testid="tweet"]');
     if (!article) return;
     const tweet = Tweet.fromElement(article);
-    if (!tweet) return;
+    if (!tweet) {
+        article.setAttribute('gbv', '0');
+        return;
+    };
 
 
 
@@ -85,6 +88,11 @@ function extractArticlesFromCell(cell: HTMLElement): void {
     decisions[tweet.statusId] = undefined;
     console.log(tweet.statusId, tweet.author);
     elements[tweet.statusId] = tweet.element;
+    if (tweet.text === '') {
+        decisions[tweet.statusId] = 0;
+        tweet.element.setAttribute('gbv', '0');
+        return;
+    }
 
     classifier.postMessage({
         type: MessageType.CLASSIFY,
