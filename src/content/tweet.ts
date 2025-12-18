@@ -74,9 +74,9 @@ export class Tweet {
         const [, author, , statusId] = statusUrl.split('/') || [];
 
         const tweetText = article.querySelector('[data-testid="tweetText"]');
-        if (!tweetText || !statusId) return null;
+        if (!statusId) return null;
 
-        const text = Tweet.extractTweetText(tweetText);
+        const text = tweetText ? Tweet.extractTweetText(tweetText) : '';
         const tweet = new Tweet(
             article,
             text,
