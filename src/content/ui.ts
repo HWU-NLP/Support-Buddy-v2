@@ -65,14 +65,6 @@ function suspendAllVideos() {
   videos.forEach((video) => !video.paused && video.pause());
 }
 
-// Monitor for video play events and pause them
-document.addEventListener('play', (e) => {
-  const target = e.target as HTMLVideoElement;
-  if (target && target.tagName === 'VIDEO') {
-    target.pause();
-  }
-}, true); // Use capture phase to catch events early
-
 
 function insertBadge(article: HTMLElement, statusId: string) {
   article.style.position = 'relative';
