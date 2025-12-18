@@ -26,7 +26,7 @@ chrome.runtime.onConnect.addListener((p) => {
   if (p.name === MESSAGE_PORT) {
     port = p;
     p.onMessage.addListener(async (message) => {
-      log("message recieved:", message)
+      log("message recieved");
       switch (message.type) {
         case MessageType.STATUS:
           p.postMessage({ type: classifier ? MessageType.READY : MessageType.LOADING });
@@ -36,7 +36,7 @@ chrome.runtime.onConnect.addListener((p) => {
           log({ids: message.ids[0], texts: texts[0]});
           
           classify(texts).then(results => {
-            log({ids: message.ids[0], results: results[0]});
+            log({ids: message.ids[0], results: results[0].label});
             // Returns the unmutated input ids for tracking
             p.postMessage({ 
               type: MessageType.RESULTS,
