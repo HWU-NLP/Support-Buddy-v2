@@ -33,9 +33,10 @@ chrome.runtime.onConnect.addListener((p) => {
           break;
         case MessageType.CLASSIFY:
           const texts = message.texts;
+          log({ids: message.ids, texts});
           
           classify(texts).then(results => {
-            log("classifier results:", results)
+            log({ids: message.ids, results});
             // Returns the unmutated input ids for tracking
             p.postMessage({ 
               type: MessageType.RESULTS,
