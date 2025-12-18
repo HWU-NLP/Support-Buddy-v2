@@ -5,6 +5,16 @@ import Toggle from '../common/Toggle';
 import MultiToggle from '../common/MultiToggle';
 
 
+const settings: {
+  enabled: boolean,
+  hideIt: boolean,
+  hideOption: number,
+  reportIt: boolean,
+  help: boolean
+} = await chrome.storage.sync.get(['enabled', 'hideIt', 'hideOption', 'reportIt', 'help']);
+
+ 
+
 const Popup: React.FC = () => {
 
   enum HideOption {
@@ -13,39 +23,23 @@ const Popup: React.FC = () => {
     Reveal = 0
   }
 
-  const get = (key: string) => {
-    return new Promise((resolve, reject) => {
-      chrome.storage.sync.get(key, (result) => {
-        resolve(result[key]);
-      });
-    });
-  };
-
-  const [enabled, setEnabled] = useState( false);
-  const [hideIt, setHideIt] = useState(false);
-  const [hideOption, setHideOption] = useState<number>(1);
-  const [reportIt, setReportIt] = useState(false);
-  const [help, setHelp] = useState(false);
-
-
-  function loadSettings() {
-    get('enabled').then((enabled) => setEnabled(enabled as boolean));
-    get('hideIt').then((hideIt) => setHideIt(hideIt as boolean));
-    get('hideOption').then((hideOption) => setHideOption(hideOption as number));
-    get('reportIt').then((reportIt) => setReportIt(reportIt as boolean));
-    get('help').then((help) => setHelp(help as boolean));
-  }
-  useEffect(() => {
-    loadSettings();
-    // updateStatus('Settings loaded', 'info');
-  }, []);
-
   
+  const [refreshPromptShown, setRefreshPromptShown] = useState(false);
+
+  const [enabled, setEnabled] = useState(settings.enabled);
+  const [hideIt, setHideIt] = useState(settings.hideIt);
+  const [hideOption, setHideOption] = useState<number>(settings.hideOption);
+  const [reportIt, setReportIt] = useState(settings.reportIt);
+  const [help, setHelp] = useState(settings.help);
+
+
+
   const store = (values: any) => chrome.storage.sync.set(values);
+  
 
   useEffect(() => {
     store({ enabled: enabled }).then(() => {
-      // updateStatus(enabled ? 'Extension enabled' : 'Extension disabled', 'success');
+      showRefreshPrompt();
     });
   }, [enabled]);
 
@@ -61,29 +55,38 @@ const Popup: React.FC = () => {
     }
   }
 
+  const showRefreshPrompt = () => {
+    setRefreshPromptShown(true);
+    setTimeout(() => {
+      setRefreshPromptShown(false);
+    }, 3000);
+  }
+
   useEffect(() => {
     store({ hideIt: hideIt }).then(() => {
-      // updateStatus(hideIt ? hideOptionMessage(hideOption) : 'All content visible', 'success');
+      showRefreshPrompt();
     });
-    }, [hideIt]);
+  }, [hideIt]);
 
   useEffect(() => {
     store({ hideOption: hideOption }).then(() => {
-      // updateStatus(hideOptionMessage(hideOption), 'success');
+      showRefreshPrompt();
     });
-    }, [hideOption]);
+  }, [hideOption]);
 
   useEffect(() => {
     store({ reportIt: reportIt }).then(() => {
-      // updateStatus(reportIt ? 'Reporting options shown' : 'Reporting options hidden', 'success');
+      showRefreshPrompt();
     });
-    }, [reportIt]);
+  }, [reportIt]);
 
   useEffect(() => {
     store({ help: help }).then(() => {
-      // updateStatus(help ? 'Support options shown' : 'Support options hidden', 'success');
+      showRefreshPrompt();
     });
   }, [help]);
+
+
 
 
 
@@ -117,9 +120,43 @@ const Popup: React.FC = () => {
     document.body.style.height = `${height}px`;
   }, [hideIt, hideOption, enabled]);
 
+
+  const reloadXTabs = async () => {
+    if (typeof chrome !== "undefined" && chrome.tabs) {
+      // Query all tabs where the URL matches X.com or twitter.com domains
+      chrome.tabs.query({}, (tabs) => {
+        tabs.forEach((tab) => {
+          if (
+            tab.url &&
+            (
+              tab.url.match(/^https?:\/\/(www\.)?twitter\.com\//) ||
+              tab.url.match(/^https?:\/\/(www\.)?x\.com\//)
+            ) &&
+            tab.id
+          ) {
+            chrome.tabs.reload(tab.id);
+          }
+        });
+      });
+    }
+  };    
+
+
   return (
     <>
       <div className="main-card" ref={mainCardRef} role="region" aria-label="Extension settings">
+        {/* Refresh prompt overlay */}
+        <div
+          className={`refresh-prompt ${refreshPromptShown ? 'show' : ''}`}
+          role="status"
+          aria-live="polite"
+        >
+          <span>Refresh X for the changes to take effect.</span>
+          <button className="refresh-button" onClick={reloadXTabs}  >
+            <i className="fas fa-refresh"></i>
+          </button>
+        </div>
+
         {/* Header */}
         <div className="header" role="heading" aria-level={1}>
           <div className="header-icon">
@@ -132,7 +169,7 @@ const Popup: React.FC = () => {
 
         {/* Main Enable Toggle */}
         <div className="toggle-section-main" title="Enable or disable the extension"
-        aria-label="Enable or disable the extension">
+          aria-label="Enable or disable the extension">
           <div className="toggle-left">
             <div className={`toggle-icon enable`}>
               <i className="fas fa-power-off"></i>
@@ -142,56 +179,56 @@ const Popup: React.FC = () => {
           <Toggle checked={enabled} onClick={() => setEnabled(!enabled)} />
         </div>
         <div className={`conditional-toggles ${enabled ? 'show' : ''}`}>
-        {/* Hide It Selection */}
-        <div className="toggle-section" title="Hide or show all content"
-        aria-label="Hide or show all content">
-          <div className="toggle-left">
-            <div className={`toggle-icon hide`}>
-              <i className="fas fa-eye"></i>
-            </div>
-            <div className={`toggle-text hide`}>Hide it</div>
-          </div>
-          <Toggle checked={hideIt} onClick={() => setHideIt(!hideIt)} />
-        </div>
-
-        {/* Multi-Toggle Section */}
-        <div className={`multi-toggle-container ${hideIt ? 'show' : 'hide'}`} 
-          aria-label="Choose how to hide content"
-        >
-          <MultiToggle
-            selectedIndex={hideOption}
-            options={[
-              { label: "Option to reveal", icon: "fas fa-eye", onClick: () => setHideOption(0), title: "Post will be blurred out, but you can click to see it" },
-              { label: "No option<br/> to reveal", icon: "fas fa-eye-low-vision", onClick: () => setHideOption(1), title: "Post will always be blurred out" },
-              { label: "Remove all trace", icon: "fas fa-ban", onClick: () => setHideOption(2), title: "You will not see any sign of the post or poster" }]
-            } 
-          />
-        </div>
-
-        {/* Conditional Toggles (only visible when hideOption is "reveal") */}
-        <div className={`conditional-toggles ${(hideOption === HideOption.Reveal || !hideIt) ? 'show' : ''}`}>
-          <div className="toggle-section" title="Show options to report harmful content"
-          aria-label="Show options to report harmful content">
+          {/* Hide It Selection */}
+          <div className="toggle-section" title="Hide or show all content"
+            aria-label="Hide or show all content">
             <div className="toggle-left">
-              <div className={`toggle-icon report`}>
-                <i className="fas fa-flag"></i>
+              <div className={`toggle-icon hide`}>
+                <i className="fas fa-eye"></i>
               </div>
-              <div className={`toggle-text report`}>Report it</div>
+              <div className={`toggle-text hide`}>Hide it</div>
             </div>
-            <Toggle checked={reportIt} onClick={() => setReportIt(!reportIt)} />
+            <Toggle checked={hideIt} onClick={() => setHideIt(!hideIt)} />
           </div>
 
-          <div className="toggle-section" title="Show options to get help"
-          aria-label="Show options to get help">
-            <div className="toggle-left">
-              <div className={`toggle-icon help`}>
-                <i className="fas fa-heart"></i>
-              </div>
-              <div className={`toggle-text help`}>Get help</div>
-            </div>
-            <Toggle checked={help} onClick={() => setHelp(!help)} />
+          {/* Multi-Toggle Section */}
+          <div className={`multi-toggle-container ${hideIt ? 'show' : 'hide'}`}
+            aria-label="Choose how to hide content"
+          >
+            <MultiToggle
+              selectedIndex={hideOption}
+              options={[
+                { label: "Option to reveal", icon: "fas fa-eye", onClick: () => setHideOption(0), title: "Post will be blurred out, but you can click to see it" },
+                { label: "No option<br/> to reveal", icon: "fas fa-eye-low-vision", onClick: () => setHideOption(1), title: "Post will always be blurred out" },
+                { label: "Remove all trace", icon: "fas fa-ban", onClick: () => setHideOption(2), title: "You will not see any sign of the post or poster" }]
+              }
+            />
           </div>
-        </div>
+
+          {/* Conditional Toggles (only visible when hideOption is "reveal") */}
+          <div className={`conditional-toggles ${(hideOption === HideOption.Reveal || !hideIt) ? 'show' : ''}`}>
+            <div className="toggle-section" title="Show options to report harmful content"
+              aria-label="Show options to report harmful content">
+              <div className="toggle-left">
+                <div className={`toggle-icon report`}>
+                  <i className="fas fa-flag"></i>
+                </div>
+                <div className={`toggle-text report`}>Report it</div>
+              </div>
+              <Toggle checked={reportIt} onClick={() => setReportIt(!reportIt)} />
+            </div>
+
+            <div className="toggle-section" title="Show options to get help"
+              aria-label="Show options to get help">
+              <div className="toggle-left">
+                <div className={`toggle-icon help`}>
+                  <i className="fas fa-heart"></i>
+                </div>
+                <div className={`toggle-text help`}>Get help</div>
+              </div>
+              <Toggle checked={help} onClick={() => setHelp(!help)} />
+            </div>
+          </div>
         </div>
       </div>
 

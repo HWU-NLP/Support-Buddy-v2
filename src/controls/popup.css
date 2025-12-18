@@ -61,6 +61,7 @@ body::-webkit-scrollbar-track {
     padding: 24px;
     width: 100%;
     max-width: 350px;
+    position: relative;
 }
 
 .header {
@@ -232,4 +233,70 @@ body::-webkit-scrollbar-track {
 .multi-toggle-container.hide {
     max-height: 0;
     overflow: hidden;
+}
+
+
+.refresh-prompt {
+    position: absolute;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    top: 12px;
+    left: 50%;
+    transform: translate(-50%, -10px);
+    width: 256px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    background: var(--medium-c1);
+    color: #fff;
+    font-size: 12px;
+    line-height: 1.4;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+    opacity: 0;
+    z-index: 10;
+    transition: opacity 0.25s ease;
+    margin-top: 12px;
+}
+
+.refresh-prompt span {
+    margin-right: 8px;
+    width: 80%;
+    display: inline-block;
+}
+
+.refresh-button {
+    display: inline-block;
+    width: 20%;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 500;
+    color: #fff;
+    line-height: 1.4;
+    padding: 8px 12px;
+    border: none;
+    border-radius: 8px;
+    pointer-events: auto;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+.refresh-button:hover {
+    transform: scale(1.05);
+    background: var(--light-c1);
+}
+
+.refresh-button:hover i {
+    color: var(--dark-c1);
+}
+
+.refresh-button i {
+    color: var(--medium-c1);
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+
+.refresh-prompt.show {
+    opacity: 1;
 }
