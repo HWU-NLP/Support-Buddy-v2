@@ -2,6 +2,13 @@ import { pipeline, TextClassificationOutput, TextClassificationPipeline } from "
 import { MESSAGE_PORT, MessageType } from "../common/message";
 import { BERT as MODEL } from "./model_configs";
 
+const log = (...args: unknown[]) => {
+  console.log(`[${new Date().toISOString()}]`, ...args);
+};
+
+const logError = (...args: unknown[]) => {
+  console.error(`[${new Date().toISOString()}]`, ...args);
+};
 
 type Result = {
   label: 0 | 1;
@@ -19,7 +26,7 @@ chrome.runtime.onConnect.addListener((p) => {
   if (p.name === MESSAGE_PORT) {
     port = p;
     p.onMessage.addListener(async (message) => {
-      console.log("message recieved:", message)
+      log("message recieved:", message)
       switch (message.type) {
         case MessageType.STATUS:
           p.postMessage({ type: classifier ? MessageType.READY : MessageType.LOADING });
@@ -28,7 +35,7 @@ chrome.runtime.onConnect.addListener((p) => {
           const texts = message.texts;
           
           classify(texts).then(results => {
-            console.log("classifier results:", results)
+            log("classifier results:", results)
             // Returns the unmutated input ids for tracking
             p.postMessage({ 
               type: MessageType.RESULTS,
@@ -46,20 +53,18 @@ chrome.runtime.onConnect.addListener((p) => {
       }
     });
 
-    console.log("port listener added")
+    log("port listener added")
   }
 });
 
-
-
-console.log('Loading classifier...');
+log('Loading classifier...');
 let classifier: TextClassificationPipeline | null = null;
 const classifierPromise = pipeline(...MODEL.config).then((c) => {
   classifier = c;
-  console.log('Classifier loaded');
+  log('Classifier loaded');
   return c;
 }).catch((err) => {
-  console.error("classifier died: ", err);
+  logError("classifier died: ", err);
   throw err;
 });
 
