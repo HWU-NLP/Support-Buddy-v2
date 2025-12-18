@@ -1,7 +1,8 @@
-/* Support Buddy Content Styles for X (Twitter) Page */
+/* ============================================================
+   Support Buddy Content Styles for X (Twitter) Page
+   ============================================================ */
 
-/* DEBUG STYLES */
-/* 
+/* DEBUG STYLES (kept for development)
 article:not([gbv]) {
     background-color: #0f0;
 }
@@ -12,6 +13,7 @@ article[gbv="0"] {
     background-color: #00f;
 } */
 
+/* Global article visibility */
 article {
   transition: opacity 0.2s ease;
   will-change: opacity;
@@ -225,6 +227,10 @@ div[role="menu"] {
   padding: 18px 18px 18px 18px;
   box-shadow: 0 2px 14px rgba(79, 3, 98, 0.14);
   margin-left: 32px;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  opacity: 0;
+  transform: translateY(10px);
+  will-change: transform, opacity;
 }
 
 
@@ -360,13 +366,6 @@ h3.actions-text {
   height: 20px;
 }
 
-
-.support-buddy-info-bubble {
-  transition: opacity 0.3s ease, transform 0.3s ease;
-  opacity: 0;
-  transform: translateY(10px);
-  will-change: transform, opacity;
-}
 
 .support-buddy-info-bubble.show {
   opacity: 1;

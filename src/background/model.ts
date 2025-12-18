@@ -69,8 +69,6 @@ const classifierPromise = pipeline(...MODEL.config).then((c) => {
   throw err;
 });
 
-
-
 const normalise = (results: TextClassificationOutput | TextClassificationOutput[]): Result[] => {
   const r = results as RawModelResult[];
   const normalise = (label: 'GBV' | 'Not GBV' | '0' | '1'): 0 | 1 => {
@@ -89,12 +87,3 @@ const classify = async (texts: string[]): Promise<Result[]> => {
   const outputs = await c(texts.map(MODEL.format))
   return normalise(outputs);
 }
-
-
-
-
-
-
-
-
-
